@@ -45,7 +45,7 @@ class BankAccount(AbstractAccount):
         super().__init__(wallet_id, account_type, owner, balance, wallet_status, currency)
         self.currency = currency
 
-        allowed_currency = {"USD", "EUR", "GBP"}
+        allowed_currency = {"RUB", "USD", "EUR", "KZT", "CNY"}
 
         if self.owner is None:
             raise InvalidOperationError("Name cannot be empty")
@@ -307,9 +307,19 @@ class InvestmentAccount(BankAccount):
         old_balance = self._balance
         self._balance += amount
 
-        ratio = self._balance / old_balance
-        for asset_type in self._portfolio:
-            self._portfolio[asset_type] *= ratio
+        if old_balance == 0:
+            self._portfolio = {
+                "stocks": self._balance / 2,
+                "bonds": self._balance / 4,
+                "etf": self._balance / 4
+            }
+        else:
+            ratio = self._balance / old_balance
+            for asset_type in self._portfolio:
+                self._portfolio[asset_type] *= ratio
+
+        return f"Your balance now is {self._balance} {self.currency}"
+
 
     def project_yearly_growth(self, growth_rates):
         self.check_status()
@@ -431,23 +441,28 @@ if __name__ == "__main__":
     print(account3)
 
     try:
-        print(f"Your total year growth: {account3.project_yearly_growth(
+        growth = account3.project_yearly_growth(
             {
                 "stocks":0.10,
                 "bonds":0.04,
                 "crypto":0.07
             }
-        )}")
+        )
+        print(f"Your total growth: {growth}")
     except InvalidOperationError as e:
         print(e)
 
-    print(f"Your total year growth: {account3.project_yearly_growth(
+    growth = account3.project_yearly_growth(
         {
             "stocks": 0.10,
             "bonds": 0.04,
             "etf": 0.07
         }
-    )}")
+    )
+    print(f"Your total growth {growth}")
+
+    print(account3.withdraw(1000))
+    print(account3.deposit(500))
 
     try:
         print(account3.withdraw(1100))
